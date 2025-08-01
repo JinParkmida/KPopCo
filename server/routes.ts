@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
 import { scheduler } from "./services/scheduler";
-import { dataSeeder } from "./services/data-seeder";
+import { realScraper } from "./services/real-scraper";
 import { insertConcertSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -141,13 +141,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Seed data endpoint for demonstration
-  app.post("/api/seed-data", async (req, res) => {
+  // Real data scraping endpoint
+  app.post("/api/scrape-real", async (req, res) => {
     try {
-      await dataSeeder.seedData();
-      res.json({ message: "Sample K-pop concert data seeded successfully" });
+      const result = await realScraper.scrapeRealData();
+      res.json({ 
+        message: "Real K-pop concert data scraped successfully from authentic sources",
+        concertsAdded: result.concerts.length,
+        artistsAdded: result.artists.length,
+        venuesAdded: result.venues.length
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to seed data" });
+      res.status(500).json({ message: "Failed to scrape real data" });
     }
   });
 

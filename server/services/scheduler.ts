@@ -1,4 +1,4 @@
-import { scraper } from './scraper';
+import { realScraper } from './real-scraper';
 import { storage } from '../storage';
 
 class ScrapingScheduler {
@@ -48,43 +48,17 @@ class ScrapingScheduler {
     });
 
     try {
-      await scraper.initialize();
-      const results = await scraper.scrapeAllSources();
-      
-      // Store the scraped data
-      const concerts = await storage.bulkCreateConcerts(results.concerts);
-      
-      // Create/update artists and venues
-      for (const artist of results.artists) {
-        const existing = await storage.getArtistByName(artist.name);
-        if (!existing) {
-          await storage.createArtist(artist);
-        }
-      }
-
-      for (const venue of results.venues) {
-        const existing = await storage.getVenueByName(venue.name, venue.city);
-        if (!existing) {
-          await storage.createVenue(venue);
-        }
-      }
-
-      // Update stats
-      await storage.bulkUpdateArtistStats();
-      await storage.bulkUpdateVenueStats();
+      const results = await realScraper.scrapeRealData();
 
       // Update job status
       await storage.updateScrapeJob(job.id, {
         status: 'completed',
         endTime: new Date(),
-        concertsFound: concerts.length,
-        errorMessage: results.errors.length > 0 ? results.errors.join('; ') : undefined,
+        concertsFound: results.concerts.length,
+        errorMessage: undefined,
       });
 
-      console.log(`Scraping completed: ${concerts.length} concerts found`);
-      if (results.errors.length > 0) {
-        console.log(`Errors encountered: ${results.errors.length}`);
-      }
+      console.log(`Real data scraping completed: ${results.concerts.length} concerts found from authentic sources`);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -96,7 +70,6 @@ class ScrapingScheduler {
         errorMessage,
       });
     } finally {
-      await scraper.close();
       this.isRunning = false;
     }
   }

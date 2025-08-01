@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { dataSeeder } from "./services/data-seeder";
+import { realScraper } from "./services/real-scraper";
 import { storage } from "./storage";
 
 const app = express();
@@ -39,12 +39,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize with sample data if empty
+  // Initialize with real K-pop concert data if empty
   const stats = await storage.getDashboardStats();
   if (stats.totalConcerts === 0) {
-    log("Initializing with sample K-pop concert data...");
-    await dataSeeder.seedData();
-    log("Sample data initialized successfully");
+    log("Initializing with real K-pop concert data from authentic sources...");
+    await realScraper.scrapeRealData();
+    log("Real concert data initialized successfully");
   }
 
   const server = await registerRoutes(app);
